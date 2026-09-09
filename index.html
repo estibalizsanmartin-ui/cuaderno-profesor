@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cuaderno del Profesor</title>
+<style>
+  :root{
+    --tp-primary:#4f46e5; --tp-header:#1e293b; --tp-selected:#6366f1;
+    --tp-button:#4f46e5; --tp-highlight:#fef3c7;
+    --bg:#f1f5f9; --card:#ffffff; --border:#e2e8f0; --text:#1e293b; --muted:#64748b;
+  }
+  .dark{--bg:#0f172a;--card:#1e293b;--border:#334155;--text:#e2e8f0;--muted:#94a3b8}
+  .dark .modal{background:#1e293b}
+  .dark input,.dark select,.dark textarea{background:#0f172a;color:#e2e8f0;border-color:#334155}
+  .dark thead{background:#172033;color:#94a3b8}
+  .dark td.sticky,.dark th.sticky{background:#1e293b}
+  .dark thead th.sticky{background:#172033}
+  .dark tr:hover{background:#17203380}
+  .dark .class-item:hover{background:#334155}
+  .dark .act-row{background:#172033;border-color:#334155}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+  .app{display:flex;height:100vh}
+  /* Sidebar */
+  .sidebar{width:260px;flex-shrink:0;background:#f8fafc;border-right:1px solid var(--border);display:flex;flex-direction:column}
+  .brand{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+  .brand .logo{width:36px;height:36px;border-radius:10px;background:var(--tp-primary);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px}
+  .brand h1{font-size:16px;font-weight:700;line-height:1.1}
+  .brand p{font-size:11px;color:var(--muted)}
+  .sb-head{padding:12px 16px 6px;display:flex;justify-content:space-between;align-items:center}
+  .sb-head span{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8}
+  .btn{display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:500;transition:.15s}
+  .btn-primary{background:var(--tp-button);color:#fff}
+  .btn-primary:hover{opacity:.9}
+  .btn-ghost{background:transparent;color:var(--muted)}
+  .btn-ghost:hover{background:#e2e8f0;color:var(--text)}
+  .btn-sm{padding:5px 10px;font-size:13px}
+  .icon-btn{padding:6px;border-radius:8px;border:none;cursor:pointer;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+  .icon-btn:hover{background:#e2e8f0;color:var(--text)}
+  .classes{flex:1;overflow-y:auto;padding:0 8px 12px;display:flex;flex-direction:column;gap:4px}
+  .class-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:12px;cursor:pointer;transition:.15s}
+  .class-item:hover{background:#e2e8f0}
+  .class-item.active{background:var(--tp-selected);color:#fff}
+  .class-item.active .sub{color:rgba(255,255,255,.8)}
+  .class-item .name{font-weight:500;font-size:14px}
+  .class-item .sub{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px}
+  .class-item .acts{opacity:0;transition:.15s;display:flex;gap:2px}
+  .class-item:hover .acts{opacity:1}
+  .class-item.active .acts{opacity:1}
+  .tut-badge{font-size:9px;font-weight:600;border-radius:3px;padding:1px 5px;background:#c7d2fe;color:#3730a3}
+  .class-item.active .tut-badge{background:rgba(255,255,255,.25);color:#fff}
+  /* Main */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0}
+  header.app-head{padding:14px 24px;background:var(--tp-header);color:#fff;display:flex;justify-content:space-between;align-items:center}
+  header.app-head h2{font-size:20px;font-weight:700}
+  header.app-head .sub{font-size:13px;color:rgba(255,255,255,.7)}
+  header.app-head .tab-name{font-size:22px;font-weight:700;opacity:.85}
+  nav.tabs{padding:10px 24px;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:6px;overflow-x:auto}
+  nav.tabs button{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:500;background:#f1f5f9;color:var(--muted);white-space:nowrap}
+  nav.tabs button:hover{background:#e2e8f0}
+  nav.tabs button.active{background:var(--tp-selected);color:#fff}
+  main.content{flex:1;overflow-y:auto;padding:24px}
+  .empty{text-align:center;color:#94a3b8;padding:48px}
+  /* Cards/tables */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
+  .card-pad{padding:16px}
+  .card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .card-head h3{font-size:15px;font-weight:600;color:#334155}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  thead{background:#f8fafc;color:var(--muted)}
+  th{padding:10px;font-weight:500;text-align:left}
+  th.center{text-align:center}
+  td{padding:8px;border-top:1px solid #f1f5f9}
+  td.center{text-align:center}
+  td.sticky,th.sticky{position:sticky;left:0;background:#fff}
+  thead th.sticky{background:#f8fafc}
+  tr:hover{background:#f8fafc80}
+  input,select{font-family:inherit;font-size:14px}
+  input[type=text],input[type=number],input[type=date],select,textarea{padding:6px 8px;border:1px solid var(--border);border-radius:6px;outline:none}
+  textarea{font-family:inherit;font-size:14px;width:100%;resize:vertical}
+  input:focus,select:focus{border-color:var(--tp-primary);box-shadow:0 0 0 2px rgba(79,70,229,.2)}
+  .grade-input{width:60px;text-align:center}
+  .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:16px}
+  .sum-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px}
+  .sum-card .dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .sum-card .lbl{font-size:12px;color:var(--muted)}
+  .sum-card .val{font-size:22px;font-weight:700}
+  .att-btn{width:28px;height:28px;border-radius:50%;border:2px solid #e2e8f0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;background:#fff}
+  .att-btn .in{width:10px;height:10px;border-radius:50%;background:#fff}
+  .warn{display:flex;align-items:center;gap:8px;font-size:14px;margin-top:12px}
+  .warn.ok{color:#16a34a}
+  .warn.bad{color:#d97706}
+  .badge{font-size:11px;padding:2px 8px;border-radius:999px;display:inline-flex;align-items:center;gap:4px;background:var(--tp-highlight)}
+  .final-cell{background:var(--tp-highlight);font-weight:700;text-align:center}
+  .avg-cell{background:var(--tp-highlight);font-weight:700;text-align:center}
+  .act-row{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;background:#f8fafc;border:1px solid #f1f5f9;margin-bottom:8px;flex-wrap:wrap}
+  .act-row .nm{flex:1;min-width:120px;font-weight:500}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:700px){.grid2{grid-template-columns:1fr}}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:13px;font-weight:500;color:#475569;margin-bottom:4px}
+  .field input,.field select{width:100%}
+  .tutor-block{background:#f8fafc;border:1px solid #f1f5f9;border-radius:8px;padding:12px;margin-bottom:12px}
+  .tutor-block h4{font-size:12px;font-weight:600;color:#475569;margin-bottom:8px}
+  .sub-tabs{display:flex;gap:2px;border-bottom:2px solid var(--border);margin-bottom:16px;overflow-x:auto}
+  .sub-tabs button{display:flex;align-items:center;gap:6px;padding:8px 14px;border:none;cursor:pointer;font-size:14px;font-weight:500;border-bottom:2px solid transparent;color:var(--muted);white-space:nowrap;background:transparent}
+  .sub-tabs button.active{border-bottom-color:var(--tp-primary);color:var(--tp-primary)}
+  .sub-tabs button:hover{color:var(--text)}
+  /* Modal */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .modal{background:#fff;border-radius:16px;width:100%;max-width:480px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .modal-head{padding:16px 24px;background:var(--tp-header);color:#fff;display:flex;justify-content:space-between;align-items:center}
+  .modal-head h3{font-size:17px;font-weight:600}
+  .modal-body{padding:24px;max-height:70vh;overflow-y:auto}
+  .modal-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+  .toast{position:fixed;bottom:20px;right:20px;padding:12px 18px;border-radius:8px;color:#fff;font-size:14px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+  .toast.ok{background:#16a34a}.toast.err{background:#dc2626}
+  .sec-desc{font-size:13px;color:var(--muted);margin-bottom:16px}
+  .muted{color:var(--muted);font-size:12px}
+  .flex{display:flex;align-items:center;gap:8px}
+  .ml-auto{margin-left:auto}
+  .hide{display:none}
+.calendar-day{min-height:150px;overflow:auto}.calendar-entry{cursor:pointer;transition:.12s}.calendar-entry:hover{filter:brightness(.96);transform:translateY(-1px)}
+  #googleLoginOverlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px}
+  #googleLoginCard{width:100%;max-width:460px;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:30px;box-shadow:0 20px 60px rgba(0,0,0,.18);text-align:center}
+  #googleLoginCard .login-logo{width:58px;height:58px;border-radius:16px;background:var(--tp-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 16px}
+  #googleLoginCard h2{font-size:22px;margin-bottom:8px}
+  #googleLoginCard p{color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:18px}
+  #googleLoginButton{display:flex;align-items:center;justify-content:center;min-height:44px;width:100%;padding:12px 18px;border:1px solid var(--border);border-radius:10px;background:#fff;color:#202124;font-weight:600;font-size:15px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.08)} #googleLoginButton:hover{background:#f8f9fa} #googleLoginButton:disabled{opacity:.6;cursor:wait}
+  #syncStatus{font-size:12px;color:rgba(255,255,255,.8);margin-right:10px;display:flex;align-items:center;gap:5px}
+  #syncStatus button{border:0;background:transparent;color:inherit;cursor:pointer;font:inherit;padding:0}
+</style>
+</head>
+<body>
+<div id="googleLoginOverlay">
+  <div id="googleLoginCard">
+    <div class="login-logo">&#127891;</div>
+    <h2>Cuaderno del Profesor</h2>
+    <p>Inicia sesión con la cuenta de Google autorizada para acceder a tu cuaderno y sincronizar los datos entre dispositivos.</p>
+    <button id="googleLoginButton" type="button" onclick="startGoogleLogin()">🔐 Iniciar sesión con Google</button>
+    <p id="googleLoginMessage" class="muted" style="margin-top:14px;margin-bottom:0">Los datos se guardan en el espacio privado de la aplicación en Google Drive.</p>
+  </div>
+</div>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">&#127891;</div>
+      <div><h1>Cuaderno</h1><p>del Profesor</p></div>
+    </div>
+    <div style="padding:8px 12px 4px"><input type="text" id="studentSearch" placeholder="&#128269; Buscar alumno..." oninput="renderSearchResults()" style="width:100%;font-size:13px;padding:6px 8px;border:1px solid var(--border);border-radius:8px"></div>
+    <div id="searchResults" style="padding:0 8px"></div>
+    <div class="sb-head"><span>Clases</span><button class="icon-btn" onclick="openClassModal()" title="Nueva clase">+ Nueva</button></div>
+    <div class="classes" id="classes"></div>
+    <div id="sidebarFooter" style="border-top:1px solid var(--border);padding:8px"></div>
+  </aside>
+  <div class="main">
+    <header class="app-head">
+      <div><h2 id="className">Cuaderno del Profesor</h2><div class="sub" id="classInfo">Selecciona o crea una clase</div></div>
+      <div id="headerRight" class="tab-name"></div>
+    </header>
+    <nav class="tabs" id="tabs"></nav>
+    <main class="content" id="content"></main>
+  </div>
+</div>
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+var STORAGE_KEY='cuaderno_profesor_offline_v1';
+var DEFAULT_COLORS={primary:'#4f46e5',header:'#1e293b',selected:'#6366f1',buttons:'#4f46e5',highlight:'#fef3c7'};
+var CLASS_COLOR_PALETTE=['#4f46e5','#dc2626','#16a34a','#f59e0b','#0891b2','#9333ea','#db2777','#65a30d'];
+function ensureClassColors(classes){return (classes||[]).map(function(c,i){if(!c.color)c.color=CLASS_COLOR_PALETTE[i%CLASS_COLOR_PALETTE.length];return c;});}
+var ATT={presente:{label:'Presente',color:'#16a34a'},falta_justificada:{label:'Falta justificada',color:'#f59e0b'},falta_injustificada:{label:'Falta injustificada',color:'#dc2626'},retraso:{label:'Retraso',color:'#3b82f6'}};
+var ATT_KEYS=['presente','falta_justificada','falta_injustificada','retraso'];
+var CATS={clase:{label:'Clase',color:'#3b82f6'},examen:{label:'Examen',color:'#dc2626'},entrega:{label:'Entrega',color:'#f59e0b'},huelga:{label:'HUELGA',color:'#7c3aed'},evento_especial:{label:'Día especial',color:'#ec4899'},otro:{label:'Otro',color:'#6b7280'}};
+var DEFAULT_CAT_COLORS={clase:'#3b82f6',examen:'#dc2626',entrega:'#f59e0b',huelga:'#7c3aed',evento_especial:'#ec4899',otro:'#6b7280'};
+function ensureCategoryColors(){if(!state.settings)state.settings={};if(!state.settings.categoryColors)state.settings.categoryColors={};Object.keys(DEFAULT_CAT_COLORS).forEach(function(k){if(!state.settings.categoryColors[k])state.settings.categoryColors[k]=DEFAULT_CAT_COLORS[k];CATS[k].color=state.settings.categoryColors[k];});}
+function setCategoryColor(k,v){ensureCategoryColors();state.settings.categoryColors[k]=v;CATS[k].color=v;commit();}
+function openCategoryColors(){ensureCategoryColors();var body='<div class="sec-desc">Elige el color que quieres utilizar para cada tipo de evento especial del calendario.</div>';Object.keys(CATS).forEach(function(k){var cat=CATS[k];body+='<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--border)"><b>'+cat.label+'</b><input type="color" value="'+cat.color+'" onchange="setCategoryColor(\''+k+'\',this.value)" style="width:56px;height:38px;padding:2px;cursor:pointer"></div>';});openModal('Colores de las categorías',body,'<button class="btn btn-primary" onclick="closeModal();render()">Guardar y cerrar</button>');}
+
+var WEEKDAYS_FULL=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábados','Domingos'];
+var TABS=[{id:'attendance',label:'Asistencia',icon:'&#128197;'},{id:'grades',label:'Notas',icon:'&#128203;'},{id:'recoveries',label:'Recuperaciones',icon:'&#8634;'},{id:'final',label:'Media final',icon:'&#127891;'},{id:'reports',label:'Informes',icon:'&#128221;'},{id:'calendar',label:'Calendario',icon:'&#128198;'},{id:'history',label:'Historial',icon:'&#128218;'},{id:'tutoring',label:'Tutoría',icon:'&#128209;'},{id:'personalize',label:'Personalizar',icon:'&#127912;'},{id:'backup',label:'Copias',icon:'&#128451;'}];
+var NAV_IDS=['attendance','grades','recoveries','final','reports'];
+var GLOBAL_TABS=['calendar','history','tutoring','personalize','backup'];
+
+function genId(){return 'id_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);}
+function clone(o){return JSON.parse(JSON.stringify(o));}
+
+function emptyState(){return {classes:[],students:[],evaluations:[],activities:[],grades:{},recoveries:{},attendance:[],calendar:[],schedule:[],reports:{},holidays:[],archivedStudents:[],tutoring:{general:'',sessions:[],interviews:[],studentNotes:{}},settings:{colors:clone(DEFAULT_COLORS),darkMode:false,rounding:2,studentSort:'alphabetical'}};}
+function sampleState(){
+  var cid=genId();
+  var names=['Ana García','Pablo López','María Fernández','Daniel Martín','Laura Sánchez'];
+  var students=names.map(function(n){return {id:genId(),name:n,classId:cid,group:'2º Bachiller A'};});
+  var eid=genId();
+  var a1=genId(),a2=genId(),a3=genId(),a4=genId();
+  var activities=[
+    {id:a1,evaluationId:eid,name:'Examen 1',weight:30,recoverable:false},
+    {id:a2,evaluationId:eid,name:'Examen 2',weight:30,recoverable:true},
+    {id:a3,evaluationId:eid,name:'Trabajo',weight:20,recoverable:false},
+    {id:a4,evaluationId:eid,name:'Exposición',weight:20,recoverable:false}
+  ];
+  var grades={};var sample=[[8,4.5,7,9],[6,6,5,7],[9,8,9,8],[5,3,6,6],[7,7,8,7]];
+  students.forEach(function(s,i){grades[s.id+'_'+a1]=sample[i][0];grades[s.id+'_'+a2]=sample[i][1];grades[s.id+'_'+a3]=sample[i][2];grades[s.id+'_'+a4]=sample[i][3];});
+  var recoveries={};recoveries[students[0].id+'_'+a2]=7;recoveries[students[3].id+'_'+a2]=5;
+  var today=new Date().toISOString().slice(0,10);
+  var attendance=students.map(function(s,i){return {id:genId(),studentId:s.id,date:today,status:i===1?'falta_justificada':(i===3?'retraso':'presente'),observations:i===1?'Cita médica':''};});
+  var studentList=students.map(function(s){return {id:s.id,name:s.name,classIds:[cid]};});
+  return {classes:[{id:cid,name:'2º Bachiller A',isTutoring:false,type:'organica',color:CLASS_COLOR_PALETTE[0]}],students:studentList,evaluations:[{id:eid,classId:cid,name:'1ª evaluación',order:0}],activities:activities,grades:grades,recoveries:recoveries,attendance:attendance,calendar:[],schedule:[],reports:{},holidays:[],archivedStudents:[],tutoring:{general:'',sessions:[],interviews:[],studentNotes:{}},settings:{colors:clone(DEFAULT_COLORS),darkMode:false,rounding:2}};
+}
+function loadState(){
+  try{var raw=localStorage.getItem(STORAGE_KEY);if(!raw)return sampleState();var p=JSON.parse(raw);var e=emptyState();var students=(p.students||[]).map(function(s){return Object.assign({},s,{classIds:s.classIds||(s.classId?[s.classId]:[]),group:s.group||''});});return Object.assign(e,p,{classes:ensureClassColors(p.classes||[]),students:students,schedule:p.schedule||[],holidays:p.holidays||[],archivedStudents:p.archivedStudents||[],tutoring:{general:(p.tutoring&&p.tutoring.general)||'',sessions:(p.tutoring&&p.tutoring.sessions)||[],interviews:(p.tutoring&&p.tutoring.interviews)||[],studentNotes:(p.tutoring&&p.tutoring.studentNotes)||{}},settings:{colors:Object.assign(clone(DEFAULT_COLORS),p.settings&&p.settings.colors||{}),darkMode:p.settings&&p.settings.darkMode||false,rounding:p.settings&&p.settings.rounding!=null?p.settings.rounding:2,studentSort:p.settings&&p.settings.studentSort||'alphabetical'}});}catch(err){return sampleState();}
+}
+/* Google Drive sync */
+var GOOGLE_CLIENT_ID='880234343384-h0cp5rd238hi6fvuio3h9q6qqaq1deoc.apps.googleusercontent.com';
+var DRIVE_SCOPE='https://www.googleapis.com/auth/drive.appdata';
+var DRIVE_FILE_NAME='cuaderno_profesor.json';
+var googleAccessToken=null;
+var googleUser=null;
+var syncBusy=false;
+var syncTimer=null;
+var SYNC_META_KEY='cuaderno_profesor_sync_meta_v1';
+function getSyncMeta(){try{return JSON.parse(localStorage.getItem(SYNC_META_KEY)||'{}');}catch(e){return {};}}
+function setSyncMeta(m){localStorage.setItem(SYNC_META_KEY,JSON.stringify(m||{}));}
+function setSyncStatus(text,ok){var el=document.getElementById('syncStatus');if(!el)return;el.innerHTML='<span>'+ (ok?'☁':'⚠') +' '+esc(text)+'</span>';}
+function showLoginMessage(text,bad){var el=document.getElementById('googleLoginMessage');if(el){el.textContent=text;el.style.color=bad?'#dc2626':'';}}
+function hideLogin(){var o=document.getElementById('googleLoginOverlay');if(o)o.style.display='none';}
+function showLogin(){var o=document.getElementById('googleLoginOverlay');if(o)o.style.display='flex';}
+var googleTokenClient=null;
+function googleInit(){
+  if(!window.google||!google.accounts||!google.accounts.oauth2){setTimeout(googleInit,300);return;}
+  googleTokenClient=google.accounts.oauth2.initTokenClient({client_id:GOOGLE_CLIENT_ID,scope:DRIVE_SCOPE,callback:function(resp){
+    var btn=document.getElementById('googleLoginButton');
+    if(btn)btn.disabled=false;
+    if(resp.error){showLoginMessage('No se pudo iniciar sesión: '+(resp.error_description||resp.error),true);return;}
+    googleAccessToken=resp.access_token; afterGoogleLogin();
+  }});
+}
+function startGoogleLogin(){
+  if(!googleTokenClient){showLoginMessage('Cargando el acceso de Google… inténtalo de nuevo en unos segundos.',true);googleInit();return;}
+  var btn=document.getElementById('googleLoginButton');
+  if(btn)btn.disabled=true;
+  showLoginMessage('Abriendo Google…',false);
+  googleTokenClient.requestAccessToken({prompt:'select_account'});
+}
+function afterGoogleLogin(){
+  hideLogin();
+  setSyncStatus('Conectando…',false);
+  syncFromDrive(true).catch(function(err){console.error('ERROR DRIVE:',err);setSyncStatus('Error de sincronización',false);toast('Error de Google Drive: '+(err&&err.message?err.message:'error desconocido'),'err');});
+}
+function driveFetch(url,options){options=options||{};options.headers=Object.assign({},options.headers||{}, {'Authorization':'Bearer '+googleAccessToken});return fetch(url,options).then(function(r){if(!r.ok)return r.text().then(function(x){throw new Error('Drive '+r.status+': '+x);});return r;});}
+function findDriveFile(){
+  var q="name='"+DRIVE_FILE_NAME.replace(/'/g,"\\'")+"'";
+  return driveFetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name,modifiedTime)&pageSize=10&q='+encodeURIComponent(q)).then(function(r){return r.json();}).then(function(d){return d.files&&d.files[0]||null;});
+}
+function downloadDriveFile(file){return driveFetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'?alt=media').then(function(r){return r.json();});}
+function uploadDriveFile(envelope,fileId){
+  var body=JSON.stringify(envelope);
+  var boundary='cuadernoBoundary'+Date.now();
+  var meta=JSON.stringify(fileId?{name:DRIVE_FILE_NAME,mimeType:'application/json'}:{name:DRIVE_FILE_NAME,parents:['appDataFolder'],mimeType:'application/json'});
+  var multipart='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+meta+'\r\n--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'+body+'\r\n--'+boundary+'--';
+  var url=fileId?'https://www.googleapis.com/upload/drive/v3/files/'+encodeURIComponent(fileId)+'?uploadType=multipart':'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+  return driveFetch(url,{method:fileId?'PATCH':'POST',headers:{'Content-Type':'multipart/related; boundary='+boundary},body:multipart}).then(function(r){return r.json();});
+}
+function makeEnvelope(){var now=Date.now();return {version:1,updatedAt:now,state:clone(state)};}
+function localLastChange(){var m=getSyncMeta();return Number(m.localUpdatedAt||0);}
+function markLocalChange(){setSyncMeta(Object.assign(getSyncMeta(),{localUpdatedAt:Date.now(),dirty:true}));}
+function saveState(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));markLocalChange();queueDriveSync();}
+function queueDriveSync(){if(!googleAccessToken)return;if(syncTimer)clearTimeout(syncTimer);syncTimer=setTimeout(function(){syncToDrive().catch(function(e){console.error('ERROR DRIVE:',e);setSyncStatus('Pendiente de sincronizar',false);toast('Error de Google Drive: '+(e&&e.message?e.message:'error desconocido'),'err');});},1200);}
+function syncToDrive(){
+  if(!googleAccessToken||syncBusy)return Promise.resolve();
+  syncBusy=true;setSyncStatus('Sincronizando…',false);
+  var env=makeEnvelope();
+  return findDriveFile().then(function(file){return uploadDriveFile(env,file&&file.id).then(function(){setSyncMeta({localUpdatedAt:env.updatedAt,lastSyncedAt:env.updatedAt,dirty:false});setSyncStatus('Sincronizado',true);});}).finally(function(){syncBusy=false;});
+}
+function syncFromDrive(initial){
+  if(!googleAccessToken)return Promise.resolve();
+  syncBusy=true;setSyncStatus('Buscando datos…',false);
+  var localTime=localLastChange();
+  return findDriveFile().then(function(file){
+    if(!file){return uploadDriveFile(makeEnvelope()).then(function(){var now=Date.now();setSyncMeta({localUpdatedAt:now,lastSyncedAt:now,dirty:false});setSyncStatus('Sincronizado',true);});}
+    return downloadDriveFile(file).then(function(remote){
+      if(!remote||!remote.state){throw new Error('El archivo de Drive no contiene datos válidos.');}
+      var remoteTime=Number(remote.updatedAt||new Date(file.modifiedTime).getTime()||0);
+      if(initial && localTime>remoteTime && getSyncMeta().dirty){
+        return uploadDriveFile(makeEnvelope(),file.id).then(function(){var now=Date.now();setSyncMeta({localUpdatedAt:now,lastSyncedAt:now,dirty:false});setSyncStatus('Sincronizado',true);});
+      }
+      state=Object.assign(emptyState(),remote.state,{classes:ensureClassColors(remote.state.classes||[]),students:(remote.state.students||[]).map(function(s){return Object.assign({},s,{classIds:s.classIds||(s.classId?[s.classId]:[]),group:s.group||''});})});
+      state.settings=Object.assign({colors:clone(DEFAULT_COLORS),darkMode:false,rounding:2,studentSort:'alphabetical'},remote.state.settings||{});
+      state.settings.colors=Object.assign(clone(DEFAULT_COLORS),(remote.state.settings&&remote.state.settings.colors)||{});
+      selectedClassId=state.classes.length?state.classes[0].id:null;activeEvalId=null;
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+      setSyncMeta({localUpdatedAt:remoteTime,lastSyncedAt:remoteTime,dirty:false});render();setSyncStatus('Sincronizado',true);
+    });
+  }).finally(function(){syncBusy=false;});
+}
+function logoutGoogle(){googleAccessToken=null;googleUser=null;showLogin();showLoginMessage('Sesión cerrada. Vuelve a iniciar sesión para acceder al cuaderno.');}
+
+
+var state=loadState();
+var selectedClassId=state.classes.length?state.classes[0].id:null;
+var activeTab='attendance';
+var activeEvalId=null;
+var tutoringSubTab='sessions';
+
+/* Report migration */
+function migrateReport(r){
+  if(!r)return {email:'',tutor1Name:'',tutor1Email:'',tutor1Phone:'',tutor2Name:'',tutor2Email:'',tutor2Phone:'',observations:''};
+  if(r.tutor1Email!==undefined)return r;
+  return {email:r.email||'',tutor1Name:'',tutor1Email:r.parentEmail||'',tutor1Phone:r.parentPhone||'',tutor2Name:'',tutor2Email:'',tutor2Phone:'',observations:r.observations||''};
+}
+
+/* Calendar functions */
+var calDayDate=null;var calDayList=[];
+function weekdaySchedule(wd){return state.schedule.filter(function(s){return s.weekday===wd;});}
+function isHoliday(ds){return (state.holidays||[]).filter(function(h){return h.date===ds;})[0]||null;}
+function dayEntries(ds){var d=new Date(ds+'T00:00:00');var wd=(d.getDay()+6)%7;var hol=isHoliday(ds);var rec=hol?[]:weekdaySchedule(wd);var out=[];rec.forEach(function(s){var e=state.calendar.filter(function(x){return x.date===ds&&x.scheduleId===s.id;})[0];var sid=s.classId||null;if(!sid){var same=state.classes.filter(function(c){return c.name===s.subject;})[0];sid=same?same.id:null;}var ce=state.classes.filter(function(c){return c.id===(e&&e.classId||sid);})[0];out.push({date:ds,scheduleId:s.id,calendarEntryId:e?e.id:null,subject:s.subject,activity:e?e.activity||'':'',category:e?e.category||'clase':'clase',classId:e&&e.classId||sid,color:(ce&&ce.color)||e&&e.color||null,recurring:true});});state.calendar.filter(function(e){return e.date===ds&&!e.scheduleId;}).forEach(function(e){out.push({date:ds,scheduleId:null,calendarEntryId:e.id,subject:e.subject,activity:e.activity||'',category:e.category||'otro',classId:e.classId||null,color:((state.classes.filter(function(c){return c.id===e.classId;})[0]||{}).color)||e.color||null,recurring:false});});return out;}
+function addScheduleSubject(wd,subject,classId){state.schedule.push({id:genId(),weekday:wd,subject:subject,classId:classId||null});commit();}
+function removeScheduleSubject(id){state.schedule=state.schedule.filter(function(s){return s.id!==id;});commit();}
+function setDayNote(ds,schedId,subject,activity,category){var e=state.calendar.filter(function(x){return x.date===ds&&x.scheduleId===schedId;})[0];if(e){e.activity=activity;e.category=category;}else{state.calendar.push({id:genId(),date:ds,scheduleId:schedId,subject:subject,activity:activity,category:category});}commit();}
+function clearDayNote(ds,schedId){state.calendar=state.calendar.filter(function(e){return !(e.date===ds&&e.scheduleId===schedId);});commit();}
+function addCalendarEvent(ds,subject,activity,category,classId){var c=state.classes.filter(function(x){return x.id===classId;})[0];state.calendar.push({id:genId(),date:ds,subject:subject,activity:activity,category:category,classId:classId||null,color:c&&c.color||null});commit();}
+function addHoliday(ds,label){if(!state.holidays)state.holidays=[];if(!state.holidays.filter(function(h){return h.date===ds;}).length)state.holidays.push({id:genId(),date:ds,label:label||'Festivo'});commit();}
+function removeHoliday(ds){state.holidays=(state.holidays||[]).filter(function(h){return h.date!==ds;});commit();}
+function setDarkMode(v){state.settings.darkMode=v;applyColors();commit();}
+function setRounding(v){state.settings.rounding=Number(v);commit();}
+function applyColors(){var c=state.settings.colors;var r=document.documentElement.style;r.setProperty('--tp-primary',c.primary);r.setProperty('--tp-header',c.header);r.setProperty('--tp-selected',c.selected);r.setProperty('--tp-button',c.buttons);r.setProperty('--tp-highlight',c.highlight);document.documentElement.classList.toggle('dark',!!state.settings.darkMode);}
+
+/* Queries */
+function classStudents(cid){
+  var list=state.students.filter(function(s){var ids=s.classIds||(s.classId?[s.classId]:[]);return ids.indexOf(cid)>=0;});
+  var mode=state.settings&&state.settings.studentSort||'alphabetical';
+  return list.sort(function(a,b){
+    if(mode==='group'){
+      var ga=(a.group||'').localeCompare(b.group||'','es',{sensitivity:'base'});
+      if(ga!==0)return ga;
+    }
+    return (a.name||'').localeCompare(b.name||'','es',{sensitivity:'base'});
+  });
+}
+function setStudentSort(mode){state.settings.studentSort=mode;commit();}
+function classEvals(cid){return state.evaluations.filter(function(e){return e.classId===cid;}).sort(function(a,b){return (a.order||0)-(b.order||0);});}
+function evalActivities(eid){return state.activities.filter(function(a){return a.evaluationId===eid;});}
+function totalWeight(acts){return acts.reduce(function(s,a){return s+(Number(a.weight)||0);},0);}
+function effGrade(sid,aid){var orig=state.grades[sid+'_'+aid];var act=state.activities.filter(function(a){return a.id===aid;})[0];if(act&&act.recoverable){var rec=state.recoveries[sid+'_'+aid];if(rec!=null&&orig!=null)return Math.max(orig,rec);if(rec!=null&&orig==null)return rec;}return orig==null?null:orig;}
+function evalAvg(sid,eid){var acts=evalActivities(eid);var sum=0,wsum=0,allGraded=true;acts.forEach(function(a){var g=effGrade(sid,a.id);if(g!=null&&g!==''){sum+=g*(Number(a.weight)||0);wsum+=Number(a.weight)||0;}else allGraded=false;});if(wsum===0)return {value:null,complete:false};return {value:sum/wsum,complete:allGraded&&totalWeight(acts)===100};}
+function finalAvg(sid){var st=state.students.filter(function(s){return s.id===sid;})[0];if(!st)return null;var evals=classEvals(st.classId);var comp=[];evals.forEach(function(e){var r=evalAvg(sid,e.id);if(r.complete&&r.value!=null)comp.push(r.value);});if(!comp.length)return null;return comp.reduce(function(s,v){return s+v;},0)/comp.length;}
+function attByDate(cid,date){return state.attendance.filter(function(a){return a.date===date&&a.classId===cid;});}
+function studentHistory(sid,cid){return state.attendance.filter(function(a){return a.studentId===sid&&(!cid||a.classId===cid);}).sort(function(a,b){return a.date<b.date?1:-1;});}
+function tutoringClass(){return state.classes.filter(function(c){return c.isTutoring;})[0]||null;}
+
+/* Corrección de asistencia por clase: los registros antiguos sin clase no se comparten entre clases. */
+state.attendance=state.attendance||[];
+state.attendance.forEach(function(a){if(!a.classId){var st=state.students.filter(function(s){return s.id===a.studentId;})[0];var ids=st?(st.classIds||(st.classId?[st.classId]:[])):[];if(ids.length===1)a.classId=ids[0];}});
+
+/* Archive */
+function archiveStudent(sid){
+  var st=state.students.filter(function(s){return s.id===sid;})[0];if(!st)return null;
+  var cids=st.classIds||(st.classId?[st.classId]:[]);
+  var cls=state.classes.filter(function(c){return c.id===cids[0];})[0];
+  var report=migrateReport(state.reports[sid]);
+  var evals=classEvals(st.classId);var gs=[];
+  evals.forEach(function(ev){evalActivities(ev.id).forEach(function(a){var sc=effGrade(sid,a.id);if(sc!=null)gs.push({name:a.name,evaluationName:ev.name,score:sc,weight:a.weight});});});
+  var att=studentHistory(sid);var as={total:att.length,presente:att.filter(function(a){return a.status==='presente';}).length,falta_justificada:att.filter(function(a){return a.status==='falta_justificada';}).length,falta_injustificada:att.filter(function(a){return a.status==='falta_injustificada';}).length,retraso:att.filter(function(a){return a.status==='retraso';}).length};
+  return {id:sid,name:st.name,group:st.group||'',className:cls?cls.name:'Sin clase',archivedDate:new Date().toISOString().slice(0,10),report:report,gradeSummary:gs,attendanceSummary:as};
+}
+
+/* Mutations */
+function addClass(name,isTut,type,color){state.classes.push({id:genId(),name:name,isTutoring:!!isTut,type:type||'organica',color:color||CLASS_COLOR_PALETTE[state.classes.length%CLASS_COLOR_PALETTE.length]});if(!selectedClassId)selectedClassId=state.classes[state.classes.length-1].id;commit();}
+function updateClass(id,name,isTut,type,color){state.classes.forEach(function(c){if(c.id===id){c.name=name;if(isTut!==undefined)c.isTutoring=isTut;if(type!==undefined)c.type=type;if(color!==undefined)c.color=color;}});commit();}
+function deleteClass(id){if(!confirm('¿Eliminar la clase y todos sus alumnos, notas y asistencia?'))return;var inClass=state.students.filter(function(s){var ids=s.classIds||(s.classId?[s.classId]:[]);return ids.indexOf(id)>=0;});if(!state.archivedStudents)state.archivedStudents=[];var archivedSIds=[];inClass.forEach(function(s){var ids=s.classIds||(s.classId?[s.classId]:[]);if(ids.length<=1){var snap=archiveStudent(s.id);if(snap){state.archivedStudents.push(snap);archivedSIds.push(s.id);}}else{s.classIds=ids.filter(function(cid){return cid!==id;});}});var eIds=state.evaluations.filter(function(e){return e.classId===id;}).map(function(e){return e.id;});var actIds=state.activities.filter(function(a){return eIds.indexOf(a.evaluationId)>=0;}).map(function(a){return a.id;});state.classes=state.classes.filter(function(c){return c.id!==id;});state.students=state.students.filter(function(s){var ids=s.classIds||(s.classId?[s.classId]:[]);return ids.indexOf(id)<0;});state.evaluations=state.evaluations.filter(function(e){return e.classId!==id;});state.activities=state.activities.filter(function(a){return eIds.indexOf(a.evaluationId)<0;});var cleanGrades=function(obj){Object.keys(obj).forEach(function(k){var parts=k.split('_');if(actIds.indexOf(parts[1])>=0)delete obj[k];});};cleanGrades(state.grades);cleanGrades(state.recoveries);state.attendance=state.attendance.filter(function(a){return archivedSIds.indexOf(a.studentId)<0;});if(selectedClassId===id)selectedClassId=state.classes.length?state.classes[0].id:null;commit();}
+function cleanMap(obj,sIds,actIds){Object.keys(obj).forEach(function(k){var parts=k.split('_');if(sIds.indexOf(parts[0])>=0||actIds.indexOf(parts[1])>=0)delete obj[k];});}
+function addStudent(name,cid,group){var sid=genId();state.students.push({id:sid,name:name,group:group||'',classIds:[cid]});state.reports[sid]={email:'',tutor1Name:'',tutor1Email:'',tutor1Phone:'',tutor2Name:'',tutor2Email:'',tutor2Phone:'',observations:''};commit();}
+function updateStudent(id,patch){state.students.forEach(function(s){if(s.id===id)Object.assign(s,patch);});commit();}
+function deleteStudent(id){if(!confirm('¿Eliminar al alumno y todos sus datos?'))return;var snap=archiveStudent(id);if(snap){if(!state.archivedStudents)state.archivedStudents=[];state.archivedStudents.push(snap);}state.students=state.students.filter(function(s){return s.id!==id;});Object.keys(state.grades).forEach(function(k){if(k.indexOf(id+'_')===0)delete state.grades[k];});Object.keys(state.recoveries).forEach(function(k){if(k.indexOf(id+'_')===0)delete state.recoveries[k];});state.attendance=state.attendance.filter(function(a){return a.studentId!==id;});delete state.reports[id];commit();}
+function archiveClassStudents(cid){var c=state.classes.filter(function(x){return x.id===cid;})[0];if(!c)return;if(!confirm('¿Archivar a todos los alumnos de "'+c.name+'"?\n\nSe guardarán sus notas, asistencia y datos de contacto en el historial. La clase se conservará para el próximo curso.'))return;var inClass=state.students.filter(function(s){var ids=s.classIds||(s.classId?[s.classId]:[]);return ids.indexOf(cid)>=0;});if(!state.archivedStudents)state.archivedStudents=[];var archivedSIds=[];inClass.forEach(function(s){var ids=s.classIds||(s.classId?[s.classId]:[]);if(ids.length<=1){var snap=archiveStudent(s.id);if(snap){state.archivedStudents.push(snap);archivedSIds.push(s.id);}}else{s.classIds=ids.filter(function(x){return x!==cid;});}});state.students=state.students.filter(function(s){var ids=s.classIds||(s.classId?[s.classId]:[]);return ids.indexOf(cid)<0;});var clean=function(obj){Object.keys(obj).forEach(function(k){if(archivedSIds.indexOf(k.split('_')[0])>=0)delete obj[k];});};clean(state.grades);clean(state.recoveries);archivedSIds.forEach(function(sid){delete state.reports[sid];});state.attendance=state.attendance.filter(function(a){return archivedSIds.indexOf(a.studentId)<0;});toast('Curso archivado');commit();}
+function addStudentFromArchive(aid,cid){var ar=(state.archivedStudents||[]).filter(function(s){return s.id===aid;})[0];if(!ar)return;var id=genId();state.students.push({id:id,name:ar.name,group:ar.group||'',classIds:[cid]});state.reports[id]=ar.report?clone(ar.report):{email:'',tutor1Name:'',tutor1Email:'',tutor1Phone:'',tutor2Name:'',tutor2Email:'',tutor2Phone:'',observations:''};commit();toast('Alumno añadido desde el historial');}
+function deleteArchivedStudent(id){if(!confirm('¿Eliminar este alumno del historial definitivamente?'))return;state.archivedStudents=(state.archivedStudents||[]).filter(function(s){return s.id!==id;});commit();}
+function markAllPresent(date,cid){var sIds=classStudents(cid).map(function(s){return s.id;});sIds.forEach(function(sid){var rec=state.attendance.filter(function(a){return a.date===date&&a.studentId===sid&&a.classId===cid;})[0];if(!rec)state.attendance.push({id:genId(),date:date,classId:cid,studentId:sid,status:'presente',observations:''});else rec.status='presente';});commit();}
+function setAttendance(date,sid,status,obs){var cid=selectedClassId;var rec=state.attendance.filter(function(a){return a.date===date&&a.studentId===sid&&a.classId===cid;})[0];if(!rec){state.attendance.push({id:genId(),date:date,classId:cid,studentId:sid,status:status,observations:obs||''});}else{rec.status=status;rec.observations=obs||'';}commit();}
+function addEval(name,cid){var order=state.evaluations.filter(function(e){return e.classId===cid;}).length;state.evaluations.push({id:genId(),classId:cid,name:name,order:order});activeEvalId=state.evaluations[state.evaluations.length-1].id;commit();}
+function updateEval(id,name){state.evaluations.forEach(function(e){if(e.id===id)e.name=name;});commit();}
+function deleteEval(id){if(!confirm('¿Eliminar la evaluación y todas sus actividades y notas?'))return;var actIds=state.activities.filter(function(a){return a.evaluationId===id;}).map(function(a){return a.id;});state.evaluations=state.evaluations.filter(function(e){return e.id!==id;});state.activities=state.activities.filter(function(a){return a.evaluationId!==id;});Object.keys(state.grades).forEach(function(k){if(actIds.indexOf(k.split('_')[1])>=0)delete state.grades[k];});Object.keys(state.recoveries).forEach(function(k){if(actIds.indexOf(k.split('_')[1])>=0)delete state.recoveries[k];});if(activeEvalId===id)activeEvalId=null;commit();}
+function addActivity(eid,name,weight,rec){state.activities.push({id:genId(),evaluationId:eid,name:name,weight:Number(weight),recoverable:!!rec});commit();}
+function updateActivity(id,patch){state.activities.forEach(function(a){if(a.id===id){Object.assign(a,patch);if(patch.weight!=null)a.weight=Number(patch.weight);}});commit();}
+function deleteActivity(id){if(!confirm('¿Eliminar la actividad y sus notas?'))return;state.activities=state.activities.filter(function(a){return a.id!==id;});Object.keys(state.grades).forEach(function(k){if(k.indexOf('_'+id)>0)delete state.grades[k];});Object.keys(state.recoveries).forEach(function(k){if(k.indexOf('_'+id)>0)delete state.recoveries[k];});commit();}
+function setGrade(sid,aid,score){var k=sid+'_'+aid;if(score===''||score==null)delete state.grades[k];else state.grades[k]=Number(score);commit();}
+function setRecovery(sid,aid,score){var k=sid+'_'+aid;if(score===''||score==null)delete state.recoveries[k];else state.recoveries[k]=Number(score);commit();}
+function updateReport(sid,patch){var r=migrateReport(state.reports[sid]);state.reports[sid]=Object.assign({},r,patch);commit();}
+function updateColors(colors){Object.assign(state.settings.colors,colors);applyColors();commit();}
+function exportData(){return JSON.stringify(state,null,2);}
+function importData(json){var p=JSON.parse(json);var students=(p.students||[]).map(function(s){return Object.assign({},s,{classIds:s.classIds||(s.classId?[s.classId]:[])});});state=Object.assign(emptyState(),p,{classes:ensureClassColors(p.classes||[]),students:students,archivedStudents:p.archivedStudents||[],tutoring:{general:(p.tutoring&&p.tutoring.general)||'',sessions:(p.tutoring&&p.tutoring.sessions)||[],interviews:(p.tutoring&&p.tutoring.interviews)||[],studentNotes:(p.tutoring&&p.tutoring.studentNotes)||{}},settings:{colors:Object.assign(clone(DEFAULT_COLORS),p.settings&&p.settings.colors||{})}});selectedClassId=state.classes.length?state.classes[0].id:null;activeEvalId=null;commit();}
+function loadSample(){state=sampleState();selectedClassId=state.classes.length?state.classes[0].id:null;activeEvalId=null;commit();}
+function clearAll(){state=emptyState();selectedClassId=null;activeEvalId=null;commit();}
+
+/* Tutoring actions */
+function addTutoringSession(date,topic,notes){if(!state.tutoring)state.tutoring={general:'',sessions:[],interviews:[],studentNotes:{}};if(!state.tutoring.sessions)state.tutoring.sessions=[];state.tutoring.sessions.push({id:genId(),date:date,topic:topic,notes:notes});commit();}
+function updateTutoringSession(id,patch){var s=state.tutoring&&state.tutoring.sessions?state.tutoring.sessions.filter(function(x){return x.id===id;})[0]:null;if(s)Object.assign(s,patch);commit();}
+function deleteTutoringSession(id){if(state.tutoring&&state.tutoring.sessions)state.tutoring.sessions=state.tutoring.sessions.filter(function(x){return x.id!==id;});commit();}
+function addTutoringInterview(d){if(!state.tutoring)state.tutoring={general:'',sessions:[],interviews:[],studentNotes:{}};if(!state.tutoring.interviews)state.tutoring.interviews=[];state.tutoring.interviews.push(Object.assign({id:genId()},d));commit();}
+function updateTutoringInterview(id,patch){var i=state.tutoring&&state.tutoring.interviews?state.tutoring.interviews.filter(function(x){return x.id===id;})[0]:null;if(i)Object.assign(i,patch);commit();}
+function deleteTutoringInterview(id){if(state.tutoring&&state.tutoring.interviews)state.tutoring.interviews=state.tutoring.interviews.filter(function(x){return x.id!==id;});commit();}
+function updateTutoringGeneral(text){if(!state.tutoring)state.tutoring={general:'',sessions:[],interviews:[],studentNotes:{}};state.tutoring.general=text;commit();}
+function updateTutoringNote(sid,text){if(!state.tutoring)state.tutoring={general:'',sessions:[],interviews:[],studentNotes:{}};if(!state.tutoring.studentNotes)state.tutoring.studentNotes={};state.tutoring.studentNotes[sid]=text;commit();}
+
+function commit(){saveState();render();}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmt(v){if(v==null)return '—';var r=state.settings.rounding!=null?state.settings.rounding:2;var f=Math.pow(10,r);return (Math.round(v*f)/f).toFixed(r);}
+
+/* Render */
+function render(){ensureCategoryColors();applyColors();renderSidebar();renderHeader();renderTabs();renderContent();}
+function renderSidebar(){
+  var el=document.getElementById('classes');if(!el)return;
+  if(!state.classes.length){el.innerHTML='<p style="padding:16px;text-align:center;color:#94a3b8;font-size:13px">No hay clases. Crea la primera.</p>';}else{
+  var html='';state.classes.forEach(function(c){
+    var count=classStudents(c.id).length;var active=c.id===selectedClassId;
+    html+='<div class="class-item'+(active?' active':'')+'" onclick="selectClass(\''+c.id+'\')">'+
+      '<div><div class="name">'+esc(c.name)+'</div><div class="sub">&#128101; '+count+' alumnos'+(c.type==='optativa'?' <span class="tut-badge">Optativa</span>':' <span class="tut-badge">Orgánica</span>')+(c.isTutoring?' <span class="tut-badge">Tutoría</span>':'')+'</div></div>'+
+      '<div class="acts"><button class="icon-btn" onclick="event.stopPropagation();openClassModal(\''+c.id+'\')" title="Editar">&#9998;</button>'+
+      '<button class="icon-btn" onclick="event.stopPropagation();deleteClass(\''+c.id+'\')" title="Eliminar">&#128465;</button></div></div>';
+  });
+  el.innerHTML=html;}
+  var sf=document.getElementById('sidebarFooter');if(sf){var fh='';[{id:'history',label:'Historial',icon:'&#128218;'},{id:'tutoring',label:'Tutoría',icon:'&#128209;'},{id:'calendar',label:'Calendario',icon:'&#128198;'},{id:'personalize',label:'Personalizar',icon:'&#127912;'},{id:'backup',label:'Copias',icon:'&#128451;'}].forEach(function(t){var a=activeTab===t.id;fh+='<div class="class-item'+(a?' active':'')+'" onclick="setTab(\''+t.id+'\')" style="font-size:14px"><span style="margin-right:8px">'+t.icon+'</span>'+t.label+'</div>';});sf.innerHTML=fh;}
+}
+function selectClass(id){selectedClassId=id;activeEvalId=null;render();}
+function renderHeader(){
+  var c=state.classes.filter(function(x){return x.id===selectedClassId;})[0];
+  document.getElementById('className').textContent=c?c.name:'Cuaderno del Profesor';
+  document.getElementById('classInfo').textContent=c?(classStudents(c.id).length+' alumnos · '+classEvals(c.id).length+' evaluaciones'):'Selecciona o crea una clase';
+  var t=TABS.filter(function(t){return t.id===activeTab;})[0];
+  var hr=document.getElementById('headerRight');hr.innerHTML='<span id="syncStatus">☁ Sin iniciar</span><button class="btn btn-sm" style="color:#fff;border:1px solid rgba(255,255,255,.3);margin-right:8px" onclick="syncToDrive().catch(function(){toast(&quot;No se pudo sincronizar&quot;,&quot;err&quot;)})">Sincronizar</button>';
+  if(c&&!GLOBAL_TABS.indexOf(activeTab)>=0||c&&GLOBAL_TABS.indexOf(activeTab)<0){hr.innerHTML='<button class="btn btn-sm" style="color:#fff;border:1px solid rgba(255,255,255,.3);margin-right:12px" onclick="archiveClassStudents(\''+c.id+'\')">Archivar curso</button>';}
+  hr.innerHTML+=(t?(t.icon+' '+t.label):'');
+}
+function renderTabs(){
+  var el=document.getElementById('tabs');
+  if(GLOBAL_TABS.indexOf(activeTab)>=0){el.innerHTML='';return;}
+  var html='';
+  TABS.filter(function(t){return NAV_IDS.indexOf(t.id)>=0;}).forEach(function(t){html+='<button class="'+(t.id===activeTab?'active':'')+'" onclick="setTab(\''+t.id+'\')">'+t.icon+' '+t.label+'</button>';});
+  el.innerHTML=html;
+}
+function setTab(id){activeTab=id;render();}
+function renderContent(){
+  var el=document.getElementById('content');
+  if(!selectedClassId&&GLOBAL_TABS.indexOf(activeTab)<0){el.innerHTML='<div class="empty"><div style="font-size:40px">&#127891;</div><p>Crea una clase en la barra lateral para empezar.</p></div>';return;}
+  if(activeTab==='attendance')el.innerHTML=renderAttendance();
+  else if(activeTab==='grades')el.innerHTML=renderGrades();
+  else if(activeTab==='recoveries')el.innerHTML=renderRecoveries();
+  else if(activeTab==='final')el.innerHTML=renderFinal();
+  else if(activeTab==='reports')el.innerHTML=renderReports();
+  else if(activeTab==='history')el.innerHTML=renderHistory();
+  else if(activeTab==='tutoring')el.innerHTML=renderTutoring();
+  else if(activeTab==='calendar')el.innerHTML=renderCalendar();
+  else if(activeTab==='personalize')el.innerHTML=renderPersonalize();
+  else el.innerHTML=renderBackup();
+}
+
+function renderAttendance(){
+  var cid=selectedClassId;var students=classStudents(cid);
+  var date=document.getElementById('attDate')?document.getElementById('attDate').value:new Date().toISOString().slice(0,10);
+  var recs={};attByDate(cid,date).forEach(function(a){recs[a.studentId]=a;});
+  var sum={presente:0,falta_justificada:0,falta_injustificada:0,retraso:0,sin:0};
+  students.forEach(function(s){var r=recs[s.id];if(!r)sum.sin++;else sum[r.status]=(sum[r.status]||0)+1;});
+  var html='<div class="flex" style="margin-bottom:16px;flex-wrap:wrap"><input type="date" id="attDate" value="'+date+'" onchange="renderContent()"><label class="flex muted" style="margin-left:8px">Ordenar: <select onchange="setStudentSort(this.value)"><option value="alphabetical" '+((state.settings.studentSort||'alphabetical')==='alphabetical'?'selected':'')+'>Alfabéticamente</option><option value="group" '+(state.settings.studentSort==='group'?'selected':'')+'>Por clase/grupo</option></select></label><button class="btn btn-sm" style="background:#16a34a;color:#fff;margin-left:auto" onclick="markAllPresent(\''+date+'\',\''+selectedClassId+'\')">&#10003; Marcar todos presentes</button><button class="btn btn-primary btn-sm" onclick="openStudentModal()">+ Nuevo alumno</button></div>';
+  html+='<div class="summary">';
+  ATT_KEYS.forEach(function(k){html+='<div class="sum-card"><div class="lbl"><span class="dot" style="background:'+ATT[k].color+'"></span>'+ATT[k].label+'</div><div class="val">'+(sum[k]||0)+'</div></div>';});
+  html+='<div class="sum-card"><div class="lbl">Sin registro</div><div class="val" style="color:#cbd5e1">'+sum.sin+'</div></div></div>';
+  if(!students.length)return html+'<div class="card"><div class="empty">No hay alumnos. Añade alumnos para registrar asistencia.</div></div>';
+  html+='<div class="card"><table><thead><tr><th>Alumno</th>'+ATT_KEYS.map(function(k){return '<th class="center">'+ATT[k].label+'</th>';}).join('')+'<th class="center">Obs.</th><th></th></tr></thead><tbody>';
+  students.forEach(function(s){
+    var r=recs[s.id];
+    html+='<tr><td><a href="#" onclick="openHistory(\''+s.id+'\');return false" style="color:inherit;text-decoration:none;font-weight:500">'+esc(s.name)+'</a>'+(s.group?'<div class="muted">'+esc(s.group)+'</div>':'')+'</td>';
+    ATT_KEYS.forEach(function(k){var active=r&&r.status===k;html+='<td class="center"><button class="att-btn" style="'+(active?'background:'+ATT[k].color+';border-color:'+ATT[k].color:'')+'" onclick="setAtt(\''+s.id+'\',\''+k+'\')">'+(active?'<span class="in"></span>':'')+'</button></td>';});
+    html+='<td class="center"><input type="text" style="width:110px;font-size:12px" value="'+esc(r&&r.observations||'')+'" placeholder="—" onchange="setAtt(\''+s.id+'\',\''+(r?r.status:'presente')+'\',this.value)"></td>';
+    html+='<td class="center"><button class="icon-btn" onclick="openStudentModal(\''+s.id+'\')" title="Editar">&#9998;</button><button class="icon-btn" onclick="deleteStudent(\''+s.id+'\')" title="Eliminar">&#128465;</button></td></tr>';
+  });
+  html+='</tbody></table></div>';
+  return html;
+}
+function setAtt(sid,status,obs){var date=document.getElementById('attDate').value;var cur=attByDate(selectedClassId,date).filter(function(a){return a.studentId===sid;})[0];setAttendance(date,sid,status,obs!=null?obs:(cur&&cur.observations||''));}
+function openHistory(sid){var st=state.students.filter(function(s){return s.id===sid;})[0];var h=studentHistory(sid);var body='';
+  if(!h.length)body='<p class="muted">Sin registros de asistencia.</p>';
+  else{body='<div style="max-height:360px;overflow-y:auto">';h.forEach(function(r){body+='<div style="display:flex;gap:12px;padding:12px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px"><span style="width:12px;height:12px;border-radius:50%;background:'+ATT[r.status].color+';margin-top:4px"></span><div><div style="font-weight:500">'+new Date(r.date).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+'</div><div style="color:var(--muted)">'+ATT[r.status].label+'</div>'+(r.observations?'<div style="font-size:12px;color:#94a3b8;font-style:italic;margin-top:4px">&quot;'+esc(r.observations)+'&quot;</div>':'')+'</div></div>';});body+='</div>';}
+  openModal('Historial — '+esc(st.name),body,null);
+}
+
+function renderGrades(){
+  var cid=selectedClassId;var evals=classEvals(cid);var students=classStudents(cid);
+  if(!evals.length)return '<div style="text-align:right;margin-bottom:16px"><button class="btn btn-primary btn-sm" onclick="openEvalModal()">+ Nueva evaluación</button></div><div class="card"><div class="empty">No hay evaluaciones. Crea la primera.</div></div>';
+  var cur=evals.filter(function(e){return e.id===activeEvalId;})[0]||evals[0];
+  var acts=evalActivities(cur.id);var ws=totalWeight(acts);
+  var html='<div class="flex" style="flex-wrap:wrap;gap:8px;margin-bottom:16px">';
+  evals.forEach(function(e){html+='<button class="btn btn-sm '+(e.id===cur.id?'':'btn-ghost')+'" style="'+(e.id===cur.id?'background:var(--tp-selected);color:#fff':'')+'" onclick="setActiveEval(\''+e.id+'\')">'+esc(e.name)+'</button>';});
+  html+='<div class="ml-auto flex"><button class="icon-btn" onclick="openEvalModal(\''+cur.id+'\')" title="Editar evaluación">&#9998;</button><button class="icon-btn" onclick="deleteEval(\''+cur.id+'\')" title="Eliminar">&#128465;</button><button class="btn btn-primary btn-sm" onclick="openEvalModal()">+ Evaluación</button></div></div>';
+  html+='<div class="card card-pad"><div class="card-head"><h3>Actividades evaluables</h3><button class="btn btn-primary btn-sm" onclick="openActModal()">+ Actividad</button></div>';
+  if(!acts.length)html+='<p class="muted" style="padding:16px;text-align:center">No hay actividades. Crea la primera.</p>';
+  else{acts.forEach(function(a){html+='<div class="act-row"><span class="nm">'+esc(a.name)+'</span>'+(a.recoverable?'<span class="badge">&#8634; Recuperable</span>':'')+'<input type="number" min="0" max="100" value="'+a.weight+'" style="width:60px;text-align:right" onchange="updateActivity(\''+a.id+'\',{weight:this.value})"><span class="muted">%</span><label class="flex" style="font-size:12px"><input type="checkbox" '+(a.recoverable?'checked':'')+' onchange="updateActivity(\''+a.id+'\',{recoverable:this.checked})"> Recup.</label><button class="icon-btn" onclick="openActModal(\''+a.id+'\')">&#9998;</button><button class="icon-btn" onclick="deleteActivity(\''+a.id+'\')">&#128465;</button></div>';});}
+  html+='<div class="warn '+(ws===100?'ok':'bad')+'">'+(ws===100?'✓ Suma de porcentajes: '+ws+'% (correcto)':'&#9888; La suma de porcentajes es '+ws+'%. Debe ser exactamente 100%.')+'</div></div>';
+  if(!students.length||!acts.length){html+='<div class="card"><div class="empty">'+(!students.length?'No hay alumnos en esta clase.':'Crea actividades para introducir notas.')+'</div></div>';return html;}
+  html+='<div class="card"><table><thead><tr><th class="sticky">Alumno</th>'+acts.map(function(a){return '<th class="center">'+esc(a.name)+'<div class="muted" style="font-weight:normal">'+a.weight+'%</div></th>';}).join('')+'<th class="center avg-cell">Media</th></tr></thead><tbody>';
+  students.forEach(function(s){var avg=evalAvg(s.id,cur.id);html+='<tr><td class="sticky" style="font-weight:500">'+esc(s.name)+'</td>';acts.forEach(function(a){var v=state.grades[s.id+'_'+a.id];html+='<td class="center"><input type="number" min="0" max="10" step="0.1" class="grade-input" value="'+(v!=null?v:'')+'" onchange="setGrade(\''+s.id+'\',\''+a.id+'\',this.value)"></td>';});html+='<td class="avg-cell">'+fmt(avg.value)+'</td></tr>';});
+  html+='</tbody></table></div>';
+  return html;
+}
+function setActiveEval(id){activeEvalId=id;renderContent();}
+
+function renderRecoveries(){
+  var cid=selectedClassId;var students=classStudents(cid);var evals=classEvals(cid);
+  var recActs=[];evals.forEach(function(e){evalActivities(e.id).forEach(function(a){if(a.recoverable)recActs.push(Object.assign({},a,{evalName:e.name}));});});
+  if(!recActs.length)return '<div class="card"><div class="empty">No hay actividades recuperables. Marca actividades como recuperables en Notas.</div></div>';
+  var html='<div class="sec-desc">&#8634; La nota definitiva es automáticamente la mejor entre la original y la de recuperación. La nota original nunca se elimina.</div>';
+  html+='<div class="card"><table><thead><tr><th>Alumno</th><th>Evaluación</th><th>Actividad</th><th class="center">Nota original</th><th class="center">Nota recuperación</th><th class="center final-cell">Nota que cuenta</th></tr></thead><tbody>';
+  students.forEach(function(s){recActs.forEach(function(a){var orig=state.grades[s.id+'_'+a.id];if(orig==null||Number(orig)>=5)return;var rec=state.recoveries[s.id+'_'+a.id];var fin=effGrade(s.id,a.id);html+='<tr><td style="font-weight:500">'+esc(s.name)+'</td><td class="muted">'+esc(a.evalName)+'</td><td>'+esc(a.name)+'</td><td class="center">'+(orig!=null?orig:'—')+'</td><td class="center"><input type="number" min="0" max="10" step="0.1" class="grade-input" value="'+(rec!=null?rec:'')+'" onchange="setRecovery(\''+s.id+'\',\''+a.id+'\',this.value)"></td><td class="final-cell">'+fmt(fin)+'</td></tr>';});});
+  html+='</tbody></table></div>';
+  return html;
+}
+
+function renderFinal(){
+  var cid=selectedClassId;var students=classStudents(cid);var evals=classEvals(cid);
+  if(!students.length)return '<div class="card"><div class="empty">No hay alumnos en esta clase.</div></div>';
+  var html='<div class="sec-desc">La media final promedia las evaluaciones completas (todas las actividades con nota y porcentajes sumando 100%). No se inventan notas de evaluaciones incompletas.</div>';
+  html+='<div class="card"><table><thead><tr><th class="sticky">Alumno</th>'+evals.map(function(e){return '<th class="center">'+esc(e.name)+'</th>';}).join('')+'<th class="center final-cell">Media final</th></tr></thead><tbody>';
+  students.forEach(function(s){var fin=finalAvg(s.id);html+='<tr><td class="sticky" style="font-weight:500">'+esc(s.name)+'</td>';evals.forEach(function(e){var avg=evalAvg(s.id,e.id);html+='<td class="center">'+(avg.value!=null?'<span style="color:'+(avg.complete?'inherit':'#d97706')+'">'+fmt(avg.value)+(avg.complete?'':' *')+'</span>':'—')+'</td>';});html+='<td class="final-cell" style="font-size:16px">'+fmt(fin)+'</td></tr>';});
+  html+='</tbody></table></div><p class="muted">* Evaluación incompleta: no entra en el cálculo de la media final.</p>';
+  return html;
+}
+
+var focusedStudentId=null;
+function renderReports(){
+  var cid=selectedClassId;var students=classStudents(cid);
+  if(!students.length)return '<div class="card"><div class="empty">No hay alumnos en esta clase.</div></div>';
+  if(!focusedStudentId || !students.some(function(s){return s.id===focusedStudentId;}))focusedStudentId=students[0].id;
+  var html='<div class="sec-desc">Informes individuales del alumnado. Elige al alumno cuyo informe quieres consultar o editar.</div>';
+  html+='<div class="card card-pad" style="margin-bottom:16px;max-width:620px"><div class="field" style="margin-bottom:0"><label>Alumno</label><select onchange="focusedStudentId=this.value;renderContent()">';
+  students.forEach(function(st){html+='<option value="'+st.id+'" '+(focusedStudentId===st.id?'selected':'')+'>'+esc(st.name)+(st.group?' — '+esc(st.group):'')+'</option>';});
+  html+='</select></div></div>';
+  var s=students.filter(function(x){return x.id===focusedStudentId;})[0];
+  var r=migrateReport(state.reports[s.id]);
+  html+='<div class="card card-pad" id="report_'+s.id+'"><div class="card-head"><div><h3>'+esc(s.name)+'</h3>'+(s.group?'<div class="muted" style="font-size:13px">Grupo: '+esc(s.group)+'</div>':'')+'</div></div>';
+  html+='<div class="field"><label>Correo del alumno</label><input type="email" value="'+esc(r.email)+'" placeholder="alumno@correo.com" onchange="updateReport(\''+s.id+'\',{email:this.value})"></div>';
+  var tutors=[{p:'tutor1',l:'Tutor legal 1'},{p:'tutor2',l:'Tutor legal 2'}];
+  tutors.forEach(function(t){html+='<div class="tutor-block"><h4>'+t.l+'</h4><div class="grid2"><div class="field"><label>Nombre</label><input type="text" value="'+esc(r[t.p+'Name'])+'" placeholder="Nombre y apellidos" onchange="updateReport(\''+s.id+'\',{'+t.p+'Name:this.value})"></div><div class="field"><label>Correo</label><input type="email" value="'+esc(r[t.p+'Email'])+'" placeholder="tutor@correo.com" onchange="updateReport(\''+s.id+'\',{'+t.p+'Email:this.value})"></div></div><div class="field"><label>Teléfono</label><input type="tel" value="'+esc(r[t.p+'Phone'])+'" placeholder="600 000 000" onchange="updateReport(\''+s.id+'\',{'+t.p+'Phone:this.value})"></div></div>';});
+  html+='<div class="field"><label>Observaciones</label><textarea rows="6" placeholder="Notas sobre el alumno..." onchange="updateReport(\''+s.id+'\',{observations:this.value})">'+esc(r.observations)+'</textarea></div>';
+  html+='</div>';
+  return html;
+}
+function renderHistory(){
+  var ar=state.archivedStudents||[];
+  if(!ar.length)return '<div class="card"><div class="empty"><div style="font-size:40px">&#128218;</div><p>No hay alumnos en el historial.</p><p class="muted" style="margin-top:4px">Cuando elimines un alumno o archives un curso, se guardará aquí su ficha.</p></div></div>';
+  var html='<div class="sec-desc">Alumnos archivados de cursos anteriores. Conserva sus datos de contacto y un resumen de su rendimiento.</div>';
+  ar.forEach(function(s){
+    var r=s.report||{};
+    html+='<div class="card card-pad"><div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="font-weight:600">'+esc(s.name)+'</h3><p class="muted">'+esc(s.className)+' · Archivado el '+esc(s.archivedDate)+'</p></div><div class="flex">'+(selectedClassId?'<button class="btn btn-primary btn-sm" onclick="addStudentFromArchive(\''+s.id+'\',\''+selectedClassId+'\')">+ Añadir a la clase</button>':'')+'<button class="icon-btn" onclick="deleteArchivedStudent(\''+s.id+'\')" title="Eliminar">&#128465;</button></div></div>';
+    html+='<div style="margin-top:12px"><b style="font-size:12px;color:var(--muted)">CONTACTO</b><div style="margin-top:4px;font-size:13px"><div>Alumno: '+(r.email||'—')+'</div><div>Tutor 1: '+(r.tutor1Name||'—')+(r.tutor1Email?' · '+esc(r.tutor1Email):'')+(r.tutor1Phone?' · '+esc(r.tutor1Phone):'')+'</div><div>Tutor 2: '+(r.tutor2Name||'—')+(r.tutor2Email?' · '+esc(r.tutor2Email):'')+(r.tutor2Phone?' · '+esc(r.tutor2Phone):'')+'</div></div></div>';
+    if(s.attendanceSummary){var a=s.attendanceSummary;html+='<div style="margin-top:8px"><b style="font-size:12px;color:var(--muted)">ASISTENCIA</b><div style="margin-top:4px;font-size:13px">Total: '+a.total+' · Presente: '+a.presente+' · F. just.: '+a.falta_justificada+' · F. injus.: '+a.falta_injustificada+' · Retrasos: '+a.retraso+'</div></div>';}
+    if(s.gradeSummary&&s.gradeSummary.length){html+='<div style="margin-top:8px"><b style="font-size:12px;color:var(--muted)">NOTAS</b><div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">';s.gradeSummary.forEach(function(g){html+='<span style="font-size:11px;padding:2px 6px;border-radius:4px;background:#f1f5f9;color:#475569">'+esc(g.evaluationName)+' · '+esc(g.name)+': <b>'+fmt(g.score)+'</b></span>';});html+='</div></div>';}
+    if(r.observations)html+='<div style="margin-top:8px"><b style="font-size:12px;color:var(--muted)">OBSERVACIONES</b><p style="font-size:13px;margin-top:4px">'+esc(r.observations)+'</p></div>';
+    html+='</div>';
+  });
+  return html;
+}
+
+function renderTutoring(){
+  var tc=tutoringClass();
+  if(!tc)return '<div class="card"><div class="empty"><div style="font-size:40px">&#128209;</div><p>No hay ninguna clase marcada como grupo de tutoría.</p><p class="muted" style="margin-top:4px">Edita una clase y marca "Es grupo de tutoría" para empezar.</p></div></div>';
+  var tut=state.tutoring||{general:'',sessions:[],interviews:[],studentNotes:{}};
+  var students=classStudents(tc.id);
+  var html='<div class="sub-tabs"><button class="'+(tutoringSubTab==='sessions'?'active':'')+'" onclick="tutoringSubTab=\'sessions\';renderContent();">Sesiones</button><button class="'+(tutoringSubTab==='interviews'?'active':'')+'" onclick="tutoringSubTab=\'interviews\';renderContent();">Entrevistas</button><button class="'+(tutoringSubTab==='followup'?'active':'')+'" onclick="tutoringSubTab=\'followup\';renderContent();">Seguimiento</button><button class="'+(tutoringSubTab==='general'?'active':'')+'" onclick="tutoringSubTab=\'general\';renderContent();">General</button></div>';
+  if(tutoringSubTab==='sessions'){
+    html+='<div class="flex" style="margin-bottom:12px"><h3 style="font-weight:600">Sesiones de tutoría</h3><button class="btn btn-primary btn-sm ml-auto" onclick="openTutoringSessionModal()">+ Nueva sesión</button></div>';
+    var sess=tut.sessions||[];
+    if(!sess.length)html+='<p class="muted" style="text-align:center;padding:24px">No hay sesiones registradas.</p>';
+    else sess.slice().reverse().forEach(function(s){html+='<div class="card card-pad"><div style="display:flex;justify-content:space-between"><div><span class="muted" style="font-size:12px">'+new Date(s.date+'T00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+'</span><h4 style="font-weight:500;margin-top:2px">'+esc(s.topic)+'</h4></div><div><button class="icon-btn" onclick="openTutoringSessionModal(\''+s.id+'\')">&#9998;</button><button class="icon-btn" onclick="if(confirm(\'¿Eliminar?\'))deleteTutoringSession(\''+s.id+'\')">&#128465;</button></div></div>'+(s.notes?'<p style="font-size:13px;margin-top:8px;white-space:pre-wrap">'+esc(s.notes)+'</p>':'')+'</div>';});
+  }
+  else if(tutoringSubTab==='interviews'){
+    html+='<div class="flex" style="margin-bottom:12px"><h3 style="font-weight:600">Entrevistas con familias</h3><button class="btn btn-primary btn-sm ml-auto" onclick="openTutoringInterviewModal()">+ Nueva entrevista</button></div>';
+    var ivs=tut.interviews||[];
+    if(!ivs.length)html+='<p class="muted" style="text-align:center;padding:24px">No hay entrevistas registradas.</p>';
+    else ivs.slice().reverse().forEach(function(i){var st=state.students.filter(function(s){return s.id===i.studentId;})[0];var an=st?st.name:'—';html+='<div class="card card-pad"><div style="display:flex;justify-content:space-between"><div><span class="muted" style="font-size:12px">'+new Date(i.date+'T00:00').toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})+'</span><h4 style="font-weight:500;margin-top:2px">'+esc(an)+'</h4>'+(i.attendee?'<p class="muted" style="font-size:12px">Asiste: '+esc(i.attendee)+'</p>':'')+'</div><div><button class="icon-btn" onclick="openTutoringInterviewModal(\''+i.id+'\')">&#9998;</button><button class="icon-btn" onclick="if(confirm(\'¿Eliminar?\'))deleteTutoringInterview(\''+i.id+'\')">&#128465;</button></div></div>'+(i.topic?'<div style="margin-top:4px;font-size:13px"><b style="font-size:12px;color:var(--muted)">Motivo:</b> '+esc(i.topic)+'</div>':'')+(i.agreements?'<div style="margin-top:2px;font-size:13px"><b style="font-size:12px;color:var(--muted)">Acuerdos:</b> '+esc(i.agreements)+'</div>':'')+(i.followUp?'<div style="margin-top:2px;font-size:13px"><b style="font-size:12px;color:var(--muted)">Seguimiento:</b> '+esc(i.followUp)+'</div>':'')+'</div>';});
+  }
+  else if(tutoringSubTab==='followup'){
+    html+='<p class="sec-desc">Observaciones individuales de tutoría, medidas adoptadas y seguimiento.</p>';
+    if(!students.length)html+='<p class="muted">No hay alumnos en la clase de tutoría.</p>';
+    else students.forEach(function(s){html+='<div class="card card-pad"><h4 style="font-weight:500;margin-bottom:8px">'+esc(s.name)+'</h4><textarea rows="2" placeholder="Observaciones de tutoría..." onchange="updateTutoringNote(\''+s.id+'\',this.value)">'+esc(tut.studentNotes&&tut.studentNotes[s.id]||'')+'</textarea></div>';});
+  }
+  else if(tutoringSubTab==='general'){
+    html+='<div class="card card-pad"><h3 style="font-weight:600;margin-bottom:8px">Notas generales</h3><textarea rows="8" placeholder="Plan de tutoría, reuniones de equipo, recordatorios..." onchange="updateTutoringGeneral(this.value)">'+esc(tut.general)+'</textarea></div>';
+  }
+  return html;
+}
+function openTutoringSessionModal(id){
+  var s=id?(state.tutoring&&state.tutoring.sessions?state.tutoring.sessions.filter(function(x){return x.id===id;})[0]:null):null;
+  var body='<div class="field"><label>Fecha</label><input type="date" id="m_date" value="'+(s?s.date:new Date().toISOString().slice(0,10))+'"></div><div class="field"><label>Tema</label><input type="text" id="m_topic" value="'+(s?esc(s.topic):'')+'" placeholder="Ej. Acogida, normas de convivencia..."></div><div class="field"><label>Desarrollo e incidencias</label><textarea id="m_notes" rows="3" placeholder="Desarrollo de la sesión, participación, incidencias...">'+(s?esc(s.notes):'')+'</textarea></div>';
+  var foot='<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveTutoringSession('+(s?'\''+s.id+'\'':'null')+')">Guardar</button></div>';
+  openModal(s?'Editar sesión':'Nueva sesión',body,foot);setTimeout(function(){document.getElementById('m_topic').focus();},50);
+}
+function saveTutoringSession(id){var d=document.getElementById('m_date').value;var t=document.getElementById('m_topic').value.trim();var n=document.getElementById('m_notes').value;if(!t)return;if(id)updateTutoringSession(id,{date:d,topic:t,notes:n});else addTutoringSession(d,t,n);closeModal();}
+function openTutoringInterviewModal(id){
+  var i=id?(state.tutoring&&state.tutoring.interviews?state.tutoring.interviews.filter(function(x){return x.id===id;})[0]:null):null;
+  var tc=tutoringClass();var students=tc?classStudents(tc.id):[];
+  var opts=students.map(function(s){return '<option value="'+s.id+'"'+(i&&i.studentId===s.id?' selected':'')+'>'+esc(s.name)+'</option>';}).join('');
+  var body='<div class="grid2"><div class="field"><label>Fecha</label><input type="date" id="m_date" value="'+(i?i.date:new Date().toISOString().slice(0,10))+'"></div><div class="field"><label>Alumno</label><select id="m_student"><option value="">Selecciona...</option>'+opts+'</select></div></div><div class="field"><label>Persona que asiste</label><input type="text" id="m_attendee" value="'+(i?esc(i.attendee||''):'')+'" placeholder="Madre, padre, tutor legal..."></div><div class="field"><label>Motivo de la entrevista</label><input type="text" id="m_topic" value="'+(i?esc(i.topic||''):'')+'" placeholder="Ej. Rendimiento académico, conducta..."></div><div class="field"><label>Acuerdos adoptados</label><textarea id="m_agreements" rows="2" placeholder="Compromisos, medidas, plazos...">'+(i?esc(i.agreements||''):'')+'</textarea></div><div class="field"><label>Seguimiento / próxima revisión</label><input type="text" id="m_followup" value="'+(i?esc(i.followUp||''):'')+'" placeholder="Ej. Revisar en 2 semanas"></div>';
+  var foot='<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveTutoringInterview('+(i?'\''+i.id+'\'':'null')+')">Guardar</button></div>';
+  openModal(i?'Editar entrevista':'Nueva entrevista',body,foot);setTimeout(function(){document.getElementById('m_topic').focus();},50);
+}
+function saveTutoringInterview(id){var d={date:document.getElementById('m_date').value,studentId:document.getElementById('m_student').value,attendee:document.getElementById('m_attendee').value,topic:document.getElementById('m_topic').value,agreements:document.getElementById('m_agreements').value,followUp:document.getElementById('m_followup').value};if(!d.studentId||!d.topic.trim())return;if(id)updateTutoringInterview(id,d);else addTutoringInterview(d);closeModal();}
+
+function renderSearchResults(){var q=(document.getElementById('studentSearch')?document.getElementById('studentSearch').value||'':'').trim().toLowerCase();var el=document.getElementById('searchResults');if(!el)return;if(!q){el.innerHTML='';return;}
+  var res=state.students.filter(function(s){return s.name.toLowerCase().indexOf(q)>=0;});
+  if(!res.length){el.innerHTML='<p class="muted" style="padding:8px 12px;font-size:13px">Sin resultados</p>';return;}
+  var html='';res.slice(0,8).forEach(function(s){var cls=state.classes.filter(function(c){return c.id===s.classId;})[0];html+='<div class="class-item" style="padding:8px 12px" onclick="searchSelectStudent(\''+s.id+'\')"><div class="name" style="font-size:13px">'+esc(s.name)+'</div><div class="sub">'+esc(cls?cls.name:'')+'</div></div>';});el.innerHTML=html;
+}
+function searchSelectStudent(sid){var st=state.students.filter(function(s){return s.id===sid;})[0];if(!st)return;selectedClassId=st.classId;activeTab='reports';focusedStudentId=sid;var sb=document.getElementById('studentSearch');if(sb)sb.value='';renderSearchResults();render();setTimeout(function(){var el=document.getElementById('report_'+sid);if(el)el.scrollIntoView({block:'center'});},80);}
+function localDateString(d){var y=d.getFullYear();var m=String(d.getMonth()+1).padStart(2,'0');var day=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+day;}
+var calCursor=new Date();calCursor.setDate(1);var calEntryModal=null;
+function renderCalendar(){ensureCategoryColors();
+  var y=calCursor.getFullYear(),m=calCursor.getMonth();var months=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],weekdays=['Lun','Mar','Mié','Jue','Vie'];
+  var first=new Date(y,m,1),last=new Date(y,m+1,0);var start=new Date(first);start.setDate(first.getDate()-((first.getDay()+6)%7));var end=new Date(last);var daysToFriday=(5-((end.getDay()+6)%7)+7)%7;end.setDate(end.getDate()+daysToFriday);var cells=[];
+  for(var dt=new Date(start);dt<=end;dt.setDate(dt.getDate()+1)){var wd=(dt.getDay()+6)%7;if(wd<5)cells.push(new Date(dt));}
+  var todayStr=localDateString(new Date());
+  var html='<div class="flex" style="gap:12px;margin-bottom:16px;flex-wrap:wrap"><h3 style="font-size:18px;font-weight:600">'+months[m]+' '+y+'</h3><div class="ml-auto flex" style="gap:4px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="openWeekSchedule()">📅 Agenda semanal</button><button class="btn btn-ghost btn-sm" onclick="openCategoryColors()">🎨 Colores de categorías</button><button class="icon-btn" onclick="calPrev()">‹</button><button class="btn btn-ghost btn-sm" onclick="calToday()">Hoy</button><button class="icon-btn" onclick="calNext()">›</button></div></div>';
+  html+='<div class="card"><div style="overflow:auto"><div style="display:grid;grid-template-columns:repeat(5,minmax(180px,1fr));min-width:900px;background:#f8fafc;color:var(--muted);font-size:12px;font-weight:600">';weekdays.forEach(function(w){html+='<div style="padding:9px;text-align:center">'+w+'</div>';});html+='</div><div style="display:grid;grid-template-columns:repeat(5,minmax(180px,1fr));min-width:900px">';
+  cells.forEach(function(d){var inMonth=d.getMonth()===m,ds=localDateString(d),entries=inMonth?dayEntries(ds):[],hol=inMonth?isHoliday(ds):null,isToday=ds===todayStr;
+    html+='<div class="calendar-day" style="border-top:1px solid #f1f5f9;border-left:1px solid #f1f5f9;padding:8px;'+(!inMonth?'background:#f8fafc;color:#94a3b8;':(hol?'background:#fffbeb':'') )+'" '+(inMonth?'onclick="calendarEmptyClick(event,\''+ds+'\')"':'')+'><div style="display:flex;justify-content:space-between"><span style="font-size:12px;font-weight:600;'+(isToday?'background:var(--tp-primary);color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center':'')+'">'+d.getDate()+'</span>'+(hol?'<span style="font-size:9px;color:#b45309">'+esc(hol.label)+'</span>':'')+'</div><div style="margin-top:6px">';
+    entries.forEach(function(e,i){var cat=CATS[e.category]||CATS.otro;var special=['huelga','examen','entrega','evento_especial'].indexOf(e.category)!==-1;var c=special?cat.color:(e.color||cat.color);html+='<div class="calendar-entry" onclick="event.stopPropagation();openCalendarEntryDirect(\''+ds+'\','+i+')" style="font-size:11px;border-left:4px solid '+c+';border-radius:5px;padding:5px 6px;margin-bottom:4px;background:'+c+'22;color:var(--text);overflow:hidden"><b>'+esc(e.subject)+'</b>'+(e.activity?'<div style="white-space:nowrap;text-overflow:ellipsis;overflow:hidden">'+esc(e.activity)+'</div>':'')+'</div>';});html+='</div></div>';});html+='</div></div></div>';return html;
+}
+function calendarEmptyClick(ev,ds){if(ev.target.closest&&ev.target.closest('.calendar-entry'))return;openCalDay(ds);}
+function openCalendarEntryDirect(ds,idx){calDayDate=ds;calDayList=dayEntries(ds);openCalEntry(idx);}
+function openWeekSchedule(){
+ var body='';WEEKDAYS_FULL.forEach(function(day,wd){var subs=state.schedule.filter(function(s){return s.weekday===wd;});body+='<div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px"><div style="font-weight:600;font-size:14px;margin-bottom:8px">'+day+'</div>';subs.forEach(function(s){var cl=state.classes.filter(function(c){return c.id===s.classId;})[0],col=cl&&cl.color||'#64748b';body+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px"><span style="width:10px;height:10px;border-radius:50%;background:'+col+'"></span><span style="flex:1">'+esc(s.subject)+'</span><button class="icon-btn" onclick="removeScheduleSubject(\''+s.id+'\')">🗑</button></div>';});body+='<div style="display:flex;gap:6px;flex-wrap:wrap"><input type="text" id="wk_'+wd+'" placeholder="Asignatura..." style="flex:1;min-width:130px"><select id="wkclass_'+wd+'"><option value="">Sin clase</option>'+state.classes.map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+'</option>';}).join('')+'</select><button class="btn btn-primary btn-sm" onclick="wkAdd('+wd+')">+</button></div></div>';});openModal('Agenda semanal',body,'');}
+function wkAdd(wd){var el=document.getElementById('wk_'+wd),cl=document.getElementById('wkclass_'+wd);if(!el)return;var v=el.value.trim();if(!v)return;addScheduleSubject(wd,v,cl?cl.value:null);}
+function calPrev(){calCursor=new Date(calCursor.getFullYear(),calCursor.getMonth()-1,1);renderContent();}
+function calNext(){calCursor=new Date(calCursor.getFullYear(),calCursor.getMonth()+1,1);renderContent();}
+function calToday(){calCursor=new Date();calCursor.setDate(1);renderContent();}
+function openCalDay(ds){
+  calDayDate=ds;calDayList=dayEntries(ds);var hol=isHoliday(ds);var body='';
+  if(hol){body='<div style="margin-bottom:12px;padding:12px;border-radius:8px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:14px;display:flex;align-items:center;gap:8px"><b>'+esc(hol.label)+'</b> — las clases recurrentes están suspendidas.</div>';}
+  if(!calDayList.length){body+='<div style="text-align:center;padding:24px"><p class="muted" style="margin-bottom:12px">Sin entradas este día.</p></div>';}
+  else{body+='<div>';calDayList.forEach(function(e,i){var c=CATS[e.category]||CATS.otro;var entryColor=e.color||c.color;body+='<div style="display:flex;gap:10px;align-items:center;padding:12px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px"><span style="width:10px;height:10px;border-radius:50%;background:'+entryColor+';flex-shrink:0"></span><div style="flex:1;min-width:0"><b>'+esc(e.subject)+'</b>'+(e.activity?'<div class="muted" style="font-size:12px">'+esc(e.activity)+'</div>':'')+'<div class="muted" style="font-size:10px">'+c.label+(e.recurring?' · semanal':'')+'</div></div><button class="icon-btn" onclick="closeModal();openCalEntry('+i+')">&#9998;</button>'+(e.recurring?(e.calendarEntryId?'<button class="icon-btn" title="Borrar nota del día" onclick="clearDayNote(\''+ds+'\',\''+e.scheduleId+'\')">&#128362;</button>':''):'<button class="icon-btn" onclick="closeModal();deleteCalEntry(\''+e.calendarEntryId+'\')">&#128465;</button>')+'</div>';});body+='</div>';}
+  body+='<div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center;border:1px dashed var(--border)" onclick="closeModal();openCalEvent(\''+ds+'\')">+ Añadir evento (examen, entrega...)</button>'+(hol?'<button class="btn btn-ghost btn-sm" onclick="removeHoliday(\''+ds+'\')">Quitar festivo</button>':'<button class="btn btn-ghost btn-sm" onclick="addHoliday(\''+ds+'\',\'Festivo\')">Marcar festivo</button>')+'</div>';
+  var title=new Date(ds+'T00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  openModal(title,body,'');
+}
+function openCalEntry(idx){var e=calDayList[idx];if(!e)return;calEntryModal={date:calDayDate,scheduleId:e.scheduleId,id:e.calendarEntryId,subject:e.subject,activity:e.activity,category:e.category,recurring:e.recurring,classId:e.classId||null};renderCalEntryModal();}
+function openCalEvent(ds){calEntryModal={date:ds,scheduleId:null,id:null,subject:'',activity:'',category:'examen',recurring:false,classId:null};renderCalEntryModal();}
+function renderCalEntryModal(){var m=calEntryModal;if(!m)return;var body='<div class="field"><label>Clase (para aplicar su color)</label><select id="m_event_class"><option value="">Sin clase</option>'+state.classes.map(function(c){return '<option value="'+c.id+'" '+(m.classId===c.id?'selected':'')+'>'+esc(c.name)+'</option>';}).join('')+'</select></div><div class="field"><label>Asignatura / título</label><input type="text" id="m_subject" value="'+esc(m.subject)+'" placeholder="Ej. Matemáticas"'+(m.recurring?' disabled':'')+'></div><div class="field"><label>¿Qué voy a hacer?</label><textarea id="m_activity" rows="3" placeholder="Ej. Repaso de integrales...">'+esc(m.activity)+'</textarea></div><div class="field"><label>Categoría</label><div style="display:flex;flex-wrap:wrap;gap:8px">';
+  Object.keys(CATS).forEach(function(k){var cat=CATS[k];var sel=k===m.category;body+='<button type="button" class="btn btn-sm" style="'+(sel?'background:'+cat.color+';color:#fff;border-color:'+cat.color:'background:#f1f5f9;color:var(--muted)')+'" onclick="setCalCat(\''+k+'\')">'+cat.label+'</button>';});
+  body+='</div></div>';
+  var foot='<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveCalEntry()">Guardar</button></div>';
+  openModal(m.recurring?'Editar clase':(m.id?'Editar evento':'Nuevo evento'),body,foot);setTimeout(function(){var el=document.getElementById('m_subject');if(el&&!el.disabled)el.focus();},50);
+}
+function setCalCat(k){var s=document.getElementById('m_subject');var a=document.getElementById('m_activity');if(calEntryModal){if(s)calEntryModal.subject=s.value;if(a)calEntryModal.activity=a.value;calEntryModal.category=k;}renderCalEntryModal();}
+function saveCalEntry(){var s=document.getElementById('m_subject').value.trim();var a=document.getElementById('m_activity').value.trim();var m=calEntryModal;if(!m||!s)return;if(m.recurring){setDayNote(m.date,m.scheduleId,s,a,m.category);}else if(m.id){var cid=document.getElementById('m_event_class').value;state.calendar.forEach(function(e){if(e.id===m.id){e.subject=s;e.activity=a;e.category=m.category;e.classId=cid||null;e.color=(state.classes.filter(function(c){return c.id===cid;})[0]||{}).color||null;}});commit();}else{addCalendarEvent(m.date,s,a,m.category,document.getElementById('m_event_class').value);}closeModal();}
+function deleteCalEntry(id){if(!confirm('¿Eliminar esta entrada?'))return;state.calendar=state.calendar.filter(function(e){return e.id!==id;});commit();}
+function renderPersonalize(){
+  var c=state.settings.colors;var fields=[['primary','Color principal'],['header','Cabecera'],['selected','Clase seleccionada'],['buttons','Botones'],['highlight','Elementos destacados']];
+  var html='<div class="sec-desc" style="max-width:600px">Personaliza la apariencia y el comportamiento. Se conservan al cerrar y volver a abrir.</div>';
+html+='<div class="card card-pad" style="max-width:600px"><div style="display:flex;justify-content:space-between;align-items:center"><div><b>Tema oscuro</b><div class="muted" style="font-size:12px">Cambia la interfaz a fondo oscuro.</div></div><button class="btn btn-sm" style="background:'+(state.settings.darkMode?'#4f46e5':'#cbd5e1')+';color:#fff;border-radius:999px;width:48px;height:26px;padding:0" onclick="setDarkMode('+!state.settings.darkMode+')">'+(state.settings.darkMode?'ON':'OFF')+'</button></div></div>';
+html+='<div class="card card-pad" style="max-width:600px"><b>Redondeo de medias</b><div class="muted" style="font-size:12px;margin-bottom:8px">Decimales al mostrar las medias.</div><div style="display:flex;gap:6px;flex-wrap:wrap">';
+[{v:0,l:'Entero'},{v:1,l:'1 decimal'},{v:2,l:'2 decimales'}].forEach(function(o){var sel=state.settings.rounding===o.v;html+='<button class="btn btn-sm" style="'+(sel?'background:var(--tp-button);color:#fff':'background:#f1f5f9;color:var(--muted)')+'" onclick="setRounding('+o.v+')">'+o.l+'</button>';});
+html+='</div></div>';
+  html+='<div class="card card-pad" style="max-width:600px">';
+  fields.forEach(function(f){html+='<div class="flex" style="justify-content:space-between;margin-bottom:12px"><div><label style="font-weight:500">'+f[1]+'</label><div class="muted" style="font-family:monospace">'+c[f[0]]+'</div></div><div class="flex"><input type="color" value="'+c[f[0]]+'" style="width:48px;height:38px;padding:2px;border:1px solid var(--border);border-radius:8px;cursor:pointer" onchange="updateColors({'+f[0]+':this.value})"><input type="text" value="'+c[f[0]]+'" style="width:110px;font-family:monospace" onchange="updateColors({'+f[0]+':this.value})"></div></div>';});
+  html+='</div><button class="btn btn-ghost btn-sm" style="margin-top:12px" onclick="updateColors('+JSON.stringify(DEFAULT_COLORS).replace(/"/g,'&quot;')+')">Restablecer colores por defecto</button>';
+  html+='<div class="card" style="max-width:600px;margin-top:16px"><div style="padding:16px 20px;background:var(--tp-header);color:#fff"><b>Vista previa — Cabecera</b></div><div style="padding:20px;display:flex;gap:8px;flex-wrap:wrap"><span class="btn btn-sm" style="background:var(--tp-selected);color:#fff">Clase seleccionada</span><button class="btn btn-primary btn-sm">Botón</button><span class="badge">Destacado</span><div style="width:48px;height:48px;border-radius:12px;background:var(--tp-primary)"></div></div></div>';
+  return html;
+}
+
+function renderBackup(){
+  var html='<div class="sec-desc" style="max-width:600px">Exporta una copia con absolutamente todos los datos. Importa el archivo en otro ordenador para trasladar la aplicación.</div>';
+  html+='<div class="grid2" style="max-width:600px"><button class="btn btn-primary" style="justify-content:flex-start;padding:20px" onclick="doExport()">&#11015; Exportar copia</button><button class="btn btn-primary" style="justify-content:flex-start;padding:20px" onclick="document.getElementById(\'fileImp\').click()">&#11014; Importar copia</button></div>';
+  html+='<input type="file" id="fileImp" accept="application/json,.json" style="display:none" onchange="doImport(this.files[0])">';
+  html+='<div style="border-top:1px solid var(--border);margin-top:20px;padding-top:16px;max-width:600px"><h4 style="margin-bottom:12px">Datos de ejemplo y borrado</h4><div class="flex" style="flex-wrap:wrap;gap:8px"><button class="btn btn-ghost btn-sm" onclick="if(confirm(\'¿Cargar datos de ejemplo? Se sustituirán los datos actuales.\')){loadSample();toast(\'Datos de ejemplo cargados\')}">&#10024; Cargar datos de ejemplo</button><button class="btn btn-ghost btn-sm" style="color:#dc2626;border:1px solid #fecaca" onclick="if(confirm(\'¿Borrar TODOS los datos? Esta acción no se puede deshacer.\')){clearAll();toast(\'Datos borrados\')}">&#128465; Borrar todos los datos</button></div></div>';
+  return html;
+}
+function doExport(){var blob=new Blob([exportData()],{type:'application/json'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='copia_seguridad_cuaderno_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url);toast('Copia exportada');}
+function doImport(file){var r=new FileReader();r.onload=function(){try{importData(r.result);toast('Copia importada');}catch(e){toast('Archivo no válido','err');}};r.readAsText(file);}
+
+/* Modals */
+function openModal(title,bodyHTML,footerHTML){
+  var root=document.getElementById('modalRoot');
+  var html='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal" onclick="event.stopPropagation()"><div class="modal-head"><h3>'+esc(title)+'</h3><button class="icon-btn" style="color:#fff" onclick="closeModal()">✕</button></div><div class="modal-body">'+bodyHTML+(footerHTML||'')+'</div></div></div>';
+  root.innerHTML=html;
+}
+function closeModal(){document.getElementById('modalRoot').innerHTML='';}
+function openClassModal(id){
+  var c=id?state.classes.filter(function(x){return x.id===id;})[0]:null;
+  var type=c&&c.type||'organica';
+  var body='<div class="field"><label>Nombre de la clase</label><input type="text" id="m_name" value="'+(c?esc(c.name):'')+'" placeholder="Ej. Lengua y Literatura"></div><div class="field"><label>Color de la clase</label><input type="color" id="m_class_color" value="'+(c&&c.color||'#4f46e5')+'" style="width:70px;height:38px;padding:2px"></div><div class="field"><label>Tipo de clase</label><select id="m_class_type"><option value="organica" '+(type==='organica'?'selected':'')+'>Orgánica</option><option value="optativa" '+(type==='optativa'?'selected':'')+'>Optativa</option></select></div><label class="flex" style="font-size:14px;margin-top:8px;cursor:pointer"><input type="checkbox" id="m_tutoring" '+(c&&c.isTutoring?'checked':'')+'> Es grupo de tutoría</label>';
+  var foot='<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveClass('+(c?'\''+c.id+'\'':'null')+')">Guardar</button></div>';
+  openModal(c?'Editar clase':'Nueva clase',body,foot);setTimeout(function(){document.getElementById('m_name').focus();},50);
+}
+function saveClass(id){var n=document.getElementById('m_name').value.trim();if(!n)return;var t=document.getElementById('m_tutoring').checked;var type=document.getElementById('m_class_type').value;var color=document.getElementById('m_class_color').value;if(id)updateClass(id,n,t,type,color);else addClass(n,t,type,color);closeModal();}
+function openStudentModal(id){
+  var s=id?state.students.filter(function(x){return x.id===id;})[0]:null;
+  var sCids=s?(s.classIds||(s.classId?[s.classId]:[])):[];
+  var cbs=state.classes.map(function(c){var chk=sCids.indexOf(c.id)>=0;return '<label class="flex" style="font-size:14px;cursor:pointer;margin-bottom:4px"><input type="checkbox" class="m_cls" value="'+c.id+'" '+(chk?'checked':'')+'> '+esc(c.name)+'</label>';}).join('');
+  var body='<div class="field"><label>Nombre y apellidos</label><input type="text" id="m_name" value="'+(s?esc(s.name):'')+'" placeholder="Nombre del alumno"></div><div class="field"><label>Clase o grupo al que pertenece</label><input type="text" id="m_group" value="'+(s?esc(s.group||''):'')+'" placeholder="Ej. 4º ESO A"></div>'+(s?'<div class="field"><label>Asignaturas / clases en las que está matriculado</label>'+cbs+'</div>':'');
+  var foot='<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveStudent('+(s?'\''+s.id+'\'':'null')+')" >Guardar</button></div>';
+  openModal(s?'Editar alumno':'Nuevo alumno',body,foot);setTimeout(function(){document.getElementById('m_name').focus();},50);
+}
+function saveStudent(id){var n=document.getElementById('m_name').value.trim();var g=document.getElementById('m_group').value.trim();if(!n)return;if(id){updateStudent(id,{name:n,group:g});var cbs=document.querySelectorAll('.m_cls:checked');var cids=Array.prototype.map.call(cbs,function(cb){return cb.value;});if(cids.length)setStudentClasses(id,cids);}else addStudent(n,selectedClassId,g);closeModal();}
+function setStudentClasses(id,cids){state.students.forEach(function(s){if(s.id===id)s.classIds=cids;});commit();}
+function openEvalModal(id){
+  var e=id?state.evaluations.filter(function(x){return x.id===id;})[0]:null;
+  var body='<div class="field"><label>Nombre</label><input type="text" id="m_name" value="'+(e?esc(e.name):'')+'" placeholder="Ej. 1ª evaluación"></div>';
+  var foot='<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveEval('+(e?'\''+e.id+'\'':'null')+')">Guardar</button></div>';
+  openModal(e?'Editar evaluación':'Nueva evaluación',body,foot);setTimeout(function(){document.getElementById('m_name').focus();},50);
+}
+function saveEval(id){var n=document.getElementById('m_name').value.trim();if(!n)return;if(id)updateEval(id,n);else addEval(n,selectedClassId);closeModal();}
+function openActModal(id){
+  var a=id?state.activities.filter(function(x){return x.id===id;})[0]:null;
+  var cur=classEvals(selectedClassId).filter(function(e){return e.id===activeEvalId;})[0]||classEvals(selectedClassId)[0];
+  var body='<div class="field"><label>Nombre</label><input type="text" id="m_name" value="'+(a?esc(a.name):'')+'" placeholder="Ej. Examen 1"></div><div class="field"><label>Porcentaje / peso (%)</label><input type="number" min="0" max="100" id="m_weight" value="'+(a?a.weight:'')+'" placeholder="Ej. 30"></div><label class="flex" style="font-size:14px"><input type="checkbox" id="m_rec" '+(a&&a.recoverable?'checked':'')+'> Admite recuperación</label>';
+  var foot='<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveAct('+(a?'\''+a.id+'\'':'null')+','+(cur?'\''+cur.id+'\'':'null')+')">Guardar</button></div>';
+  openModal(a?'Editar actividad':'Nueva actividad',body,foot);setTimeout(function(){document.getElementById('m_name').focus();},50);
+}
+function saveAct(id,eid){var n=document.getElementById('m_name').value.trim();var w=document.getElementById('m_weight').value;var rec=document.getElementById('m_rec').checked;if(!n||w==='')return;if(id)updateActivity(id,{name:n,weight:w,recoverable:rec});else addActivity(eid,n,w,rec);closeModal();}
+function toast(msg,type){var r=document.getElementById('toastRoot');var d=document.createElement('div');d.className='toast '+(type||'ok');d.textContent=msg;r.innerHTML='';r.appendChild(d);setTimeout(function(){d.remove();},2500);}
+
+applyColors();render();
+setTimeout(googleInit,200);
+</script>
+</body>
+</html>
